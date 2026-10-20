@@ -7,7 +7,7 @@ class Config:
     # 2. Nếu không có biến môi trường, mặc định dùng URI PostgreSQL của Supabase
     db_url = os.environ.get(
         'DATABASE_URL',
-        'postgresql://postgres:[Nguyentienhuy10]@db.xfwmvvykzgjkrujjkjdq.supabase.co:5432/postgres'
+        'postgresql://postgres:Nguyentienhuy10@db.xfwmvvykzgjkrujjkjdq.supabase.co:5432/postgres'
     )
 
     # Đảm bảo tiền tố là postgresql:// (tương thích với SQLAlchemy)
