@@ -1,0 +1,487 @@
+{% extends 'base.html' %}
+
+{% block page_title %}Quản Lý Dữ Liệu{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto space-y-8">
+    <!-- Header Section -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900">Quản Lý Dữ Liệu</h1>
+            <p class="mt-2 text-gray-600">Lọc, xem và quản lý dữ liệu chấm công của hệ thống</p>
+        </div>
+        <div class="mt-4 sm:mt-0 flex items-center space-x-3">
+            <div class="bg-white px-4 py-2 rounded-lg shadow-sm border">
+                <div class="flex items-center space-x-2 text-sm text-gray-600">
+                    <i class="fas fa-database text-blue-500"></i>
+                    <span>Thống kê: {{ attendances|length + leave_requests|length + supp_atts|length }} bản ghi</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Section -->
+    <div class="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50">
+            <div class="flex items-center space-x-3">
+                <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-filter text-blue-600"></i>
+                </div>
+                <h2 class="text-xl font-semibold text-gray-900">Bộ Lọc Dữ Liệu</h2>
+            </div>
+        </div>
+        
+        <div class="p-6">
+            <form method="POST" action="{{ url_for('admin_data_management') }}" class="space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div class="space-y-2">
+                        <label class="block text-sm font-medium text-gray-700">
+                            <i class="fas fa-calendar-alt mr-2 text-gray-500"></i>Tháng
+                        </label>
+                        <input type="number" name="month" value="{{ month }}" min="1" max="12" 
+                               class="form-input w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200">
+                    </div>
+                    
+                    <div class="space-y-2">
+                        <label class="block text-sm font-medium text-gray-700">
+                            <i class="fas fa-calendar mr-2 text-gray-500"></i>Năm
+                        </label>
+                        <input type="number" name="year" value="{{ year }}" min="2020" max="2030" 
+                               class="form-input w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200">
+                    </div>
+                    
+                    <div class="space-y-2">
+                        <label class="block text-sm font-medium text-gray-700">
+                            <i class="fas fa-clock mr-2 text-gray-500"></i>Kỳ
+                        </label>
+                        <select name="period" class="form-input w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200">
+                            <option value="all" {% if period == 'all' %}selected{% endif %}>Tất Cả</option>
+                            <option value="month" {% if period == 'month' %}selected{% endif %}>Tháng</option>
+                            <option value="week" {% if period == 'week' %}selected{% endif %}>Tuần</option>
+                            <option value="year" {% if period == 'year' %}selected{% endif %}>Năm</option>
+                        </select>
+                    </div>
+                    
+                    <div class="space-y-2">
+                        <label class="block text-sm font-medium text-gray-700">&nbsp;</label>
+                        <button type="submit" 
+                                class="btn w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-3 rounded-lg hover:from-blue-700 hover:to-blue-800 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 shadow-md hover:shadow-lg font-medium">
+                            <i class="fas fa-search mr-2"></i>Áp Dụng Lọc
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="bg-gradient-to-br from-blue-500 to-blue-600 p-6 rounded-xl text-white shadow-lg">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-blue-100">Chấm Công</p>
+                    <p class="text-2xl font-bold">{{ attendances|length }}</p>
+                </div>
+                <div class="w-12 h-12 bg-blue-400 bg-opacity-30 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-calendar-check text-xl"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-gradient-to-br from-green-500 to-green-600 p-6 rounded-xl text-white shadow-lg">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-green-100">Đơn Xin Nghỉ</p>
+                    <p class="text-2xl font-bold">{{ leave_requests|length }}</p>
+                </div>
+                <div class="w-12 h-12 bg-green-400 bg-opacity-30 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-calendar-times text-xl"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-gradient-to-br from-purple-500 to-purple-600 p-6 rounded-xl text-white shadow-lg">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-purple-100">Lý Do Bổ Sung</p>
+                    <p class="text-2xl font-bold">{{ supp_atts|length }}</p>
+                </div>
+                <div class="w-12 h-12 bg-purple-400 bg-opacity-30 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-plus-circle text-xl"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Attendance Section -->
+    <div class="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-calendar-check text-blue-600"></i>
+                    </div>
+                    <h2 class="text-xl font-semibold text-gray-900">Dữ Liệu Chấm Công</h2>
+                </div>
+                {% if attendances %}
+                <form method="POST" action="{{ url_for('admin_data_management') }}" class="inline"
+                      onsubmit="return confirm('Bạn có chắc chắn muốn xóa tất cả chấm công theo bộ lọc? Hành động này không thể hoàn tác!');">
+                    <input type="hidden" name="batch_delete_attendance" value="1">
+                    <button type="submit" 
+                            class="flex items-center px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors text-sm font-medium shadow-sm">
+                        <i class="fas fa-trash-alt mr-2"></i>Xóa Tất Cả
+                    </button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="p-6">
+            {% if attendances %}
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead>
+                            <tr class="border-b border-gray-200">
+                                <th class="text-left py-3 px-4 font-semibold text-gray-700">ID</th>
+                                <th class="text-left py-3 px-4 font-semibold text-gray-700">Nhân Viên</th>
+                                <th class="text-left py-3 px-4 font-semibold text-gray-700">Ngày</th>
+                                <th class="text-left py-3 px-4 font-semibold text-gray-700">Thời Gian</th>
+                                <th class="text-center py-3 px-4 font-semibold text-gray-700">Hành Động</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200">
+                            {% for att in attendances %}
+                            <tr class="hover:bg-gray-50 transition-colors">
+                                <td class="py-4 px-4">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                        #{{ att.id }}
+                                    </span>
+                                </td>
+                                <td class="py-4 px-4">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="w-8 h-8 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center">
+                                            <span class="text-white font-semibold text-xs">
+                                                {{ (att.user.full_name[0] if att.user and att.user.full_name else 'U')|upper }}
+                                            </span>
+                                        </div>
+                                        <div>
+                                            <p class="font-medium text-gray-900">{{ att.user.full_name if att.user else 'Unknown' }}</p>
+                                            <p class="text-sm text-gray-500">@{{ att.user.username if att.user else 'unknown' }}</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="py-4 px-4">
+                                    <div class="flex items-center space-x-2">
+                                        <i class="fas fa-calendar text-gray-400"></i>
+                                        <span class="text-gray-900">{{ att.date.strftime('%d/%m/%Y') }}</span>
+                                    </div>
+                                </td>
+                                <td class="py-4 px-4">
+                                    {% if att.created_at %}
+                                    <div class="flex items-center space-x-2">
+                                        <i class="fas fa-clock text-gray-400"></i>
+                                        <span class="text-gray-900">{{ att.created_at.strftime('%H:%M:%S') }}</span>
+                                    </div>
+                                    {% else %}
+                                    <span class="text-gray-400">-</span>
+                                    {% endif %}
+                                </td>
+                                <td class="py-4 px-4 text-center">
+                                    <form method="POST" action="{{ url_for('admin_data_management') }}" class="inline"
+                                          onsubmit="return confirm('Bạn có chắc chắn muốn xóa chấm công này?');">
+                                        <input type="hidden" name="delete_attendance" value="{{ att.id }}">
+                                        <button type="submit" 
+                                                class="inline-flex items-center px-3 py-1.5 bg-red-500 text-white text-sm rounded-lg hover:bg-red-600 transition-colors">
+                                            <i class="fas fa-trash text-xs mr-1"></i>Xóa
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-12">
+                    <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-calendar-check text-3xl text-gray-400"></i>
+                    </div>
+                    <h3 class="text-lg font-medium text-gray-900 mb-2">Không có dữ liệu chấm công</h3>
+                    <p class="text-gray-500">Không tìm thấy dữ liệu chấm công nào với bộ lọc hiện tại.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Leave Requests Section -->
+    <div class="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-calendar-times text-green-600"></i>
+                    </div>
+                    <h2 class="text-xl font-semibold text-gray-900">Đơn Xin Nghỉ</h2>
+                </div>
+                {% if leave_requests %}
+                <form method="POST" action="{{ url_for('admin_data_management') }}" class="inline"
+                      onsubmit="return confirm('Bạn có chắc chắn muốn xóa tất cả đơn xin nghỉ? Hành động này không thể hoàn tác!');">
+                    <input type="hidden" name="batch_delete_leave" value="1">
+                    <button type="submit" 
+                            class="flex items-center px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors text-sm font-medium shadow-sm">
+                        <i class="fas fa-trash-alt mr-2"></i>Xóa Tất Cả
+                    </button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="p-6">
+            {% if leave_requests %}
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead>
+                            <tr class="border-b border-gray-200">
+                                <th class="text-left py-3 px-4 font-semibold text-gray-700">ID</th>
+                                <th class="text-left py-3 px-4 font-semibold text-gray-700">Nhân Viên</th>
+                                <th class="text-left py-3 px-4 font-semibold text-gray-700">Ngày</th>
+                                <th class="text-left py-3 px-4 font-semibold text-gray-700">Ca</th>
+                                <th class="text-left py-3 px-4 font-semibold text-gray-700">Trạng Thái</th>
+                                <th class="text-center py-3 px-4 font-semibold text-gray-700">Hành Động</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200">
+                            {% for leave in leave_requests %}
+                            <tr class="hover:bg-gray-50 transition-colors">
+                                <td class="py-4 px-4">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                        #{{ leave.id }}
+                                    </span>
+                                </td>
+                                <td class="py-4 px-4">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="w-8 h-8 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center">
+                                            <span class="text-white font-semibold text-xs">
+                                                {{ (leave.user.full_name[0] if leave.user and leave.user.full_name else 'U')|upper }}
+                                            </span>
+                                        </div>
+                                        <div>
+                                            <p class="font-medium text-gray-900">{{ leave.user.full_name if leave.user else 'Unknown' }}</p>
+                                            <p class="text-sm text-gray-500">@{{ leave.user.username if leave.user else 'unknown' }}</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="py-4 px-4">
+                                    <div class="flex items-center space-x-2">
+                                        <i class="fas fa-calendar text-gray-400"></i>
+                                        <span class="text-gray-900">{{ leave.date.strftime('%d/%m/%Y') }}</span>
+                                    </div>
+                                </td>
+                                <td class="py-4 px-4">
+                                    <span class="px-2 py-1 text-xs font-medium rounded-full {% if leave.shift == 'morning' %}bg-yellow-100 text-yellow-800{% else %}bg-blue-100 text-blue-800{% endif %}">
+                                        {{ 'Ca Sáng' if leave.shift == 'morning' else 'Ca Chiều' }}
+                                    </span>
+                                </td>
+                                <td class="py-4 px-4">
+                                    <span class="px-2 py-1 text-xs font-medium rounded-full {% if leave.status == 'approved' %}bg-green-100 text-green-800{% elif leave.status == 'pending' %}bg-orange-100 text-orange-800{% else %}bg-red-100 text-red-800{% endif %}">
+                                        {% if leave.status == 'approved' %}Đã duyệt{% elif leave.status == 'pending' %}Chờ duyệt{% else %}Từ chối{% endif %}
+                                    </span>
+                                </td>
+                                <td class="py-4 px-4 text-center">
+                                    <form method="POST" action="{{ url_for('admin_data_management') }}" class="inline"
+                                          onsubmit="return confirm('Bạn có chắc chắn muốn xóa đơn xin nghỉ này?');">
+                                        <input type="hidden" name="delete_leave" value="{{ leave.id }}">
+                                        <button type="submit" 
+                                                class="inline-flex items-center px-3 py-1.5 bg-red-500 text-white text-sm rounded-lg hover:bg-red-600 transition-colors">
+                                            <i class="fas fa-trash text-xs mr-1"></i>Xóa
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-12">
+                    <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-calendar-times text-3xl text-gray-400"></i>
+                    </div>
+                    <h3 class="text-lg font-medium text-gray-900 mb-2">Không có đơn xin nghỉ</h3>
+                    <p class="text-gray-500">Không tìm thấy đơn xin nghỉ nào với bộ lọc hiện tại.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Supplementary Attendance Section -->
+    <div class="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-plus-circle text-purple-600"></i>
+                    </div>
+                    <h2 class="text-xl font-semibold text-gray-900">Lý Do Bổ Sung</h2>
+                </div>
+                {% if supp_atts %}
+                <form method="POST" action="{{ url_for('admin_data_management') }}" class="inline"
+                      onsubmit="return confirm('Bạn có chắc chắn muốn xóa tất cả lý do bổ sung? Hành động này không thể hoàn tác!');">
+                    <input type="hidden" name="batch_delete_supp" value="1">
+                    <button type="submit" 
+                            class="flex items-center px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors text-sm font-medium shadow-sm">
+                        <i class="fas fa-trash-alt mr-2"></i>Xóa Tất Cả
+                    </button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="p-6">
+            {% if supp_atts %}
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead>
+                            <tr class="border-b border-gray-200">
+                                <th class="text-left py-3 px-4 font-semibold text-gray-700">ID</th>
+                                <th class="text-left py-3 px-4 font-semibold text-gray-700">Nhân Viên</th>
+                                <th class="text-left py-3 px-4 font-semibold text-gray-700">Ngày</th>
+                                <th class="text-left py-3 px-4 font-semibold text-gray-700">Ca</th>
+                                <th class="text-left py-3 px-4 font-semibold text-gray-700">Lý Do</th>
+                                <th class="text-center py-3 px-4 font-semibold text-gray-700">Hành Động</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200">
+                            {% for supp in supp_atts %}
+                            <tr class="hover:bg-gray-50 transition-colors">
+                                <td class="py-4 px-4">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                        #{{ supp.id }}
+                                    </span>
+                                </td>
+                                <td class="py-4 px-4">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="w-8 h-8 bg-gradient-to-br from-purple-400 to-purple-600 rounded-full flex items-center justify-center">
+                                            <span class="text-white font-semibold text-xs">
+                                                {{ (supp.user.full_name[0] if supp.user and supp.user.full_name else 'U')|upper }}
+                                            </span>
+                                        </div>
+                                        <div>
+                                            <p class="font-medium text-gray-900">{{ supp.user.full_name if supp.user else 'Unknown' }}</p>
+                                            <p class="text-sm text-gray-500">@{{ supp.user.username if supp.user else 'unknown' }}</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="py-4 px-4">
+                                    <div class="flex items-center space-x-2">
+                                        <i class="fas fa-calendar text-gray-400"></i>
+                                        <span class="text-gray-900">{{ supp.date.strftime('%d/%m/%Y') }}</span>
+                                    </div>
+                                </td>
+                                <td class="py-4 px-4">
+                                    <span class="px-2 py-1 text-xs font-medium rounded-full {% if supp.shift == 'morning' %}bg-yellow-100 text-yellow-800{% else %}bg-blue-100 text-blue-800{% endif %}">
+                                        {{ 'Ca Sáng' if supp.shift == 'morning' else 'Ca Chiều' }}
+                                    </span>
+                                </td>
+                                <td class="py-4 px-4">
+                                    <div class="max-w-xs">
+                                        <p class="text-sm text-gray-900 truncate" title="{{ supp.reason if supp.reason else 'Không có lý do' }}">
+                                            {{ supp.reason if supp.reason else 'Không có lý do' }}
+                                        </p>
+                                    </div>
+                                </td>
+                                <td class="py-4 px-4 text-center">
+                                    <form method="POST" action="{{ url_for('admin_data_management') }}" class="inline"
+                                          onsubmit="return confirm('Bạn có chắc chắn muốn xóa lý do bổ sung này?');">
+                                        <input type="hidden" name="delete_supp" value="{{ supp.id }}">
+                                        <button type="submit" 
+                                                class="inline-flex items-center px-3 py-1.5 bg-red-500 text-white text-sm rounded-lg hover:bg-red-600 transition-colors">
+                                            <i class="fas fa-trash text-xs mr-1"></i>Xóa
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-12">
+                    <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-plus-circle text-3xl text-gray-400"></i>
+                    </div>
+                    <h3 class="text-lg font-medium text-gray-900 mb-2">Không có lý do bổ sung</h3>
+                    <p class="text-gray-500">Không tìm thấy lý do bổ sung nào với bộ lọc hiện tại.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Warning Section -->
+    <div class="bg-amber-50 border border-amber-200 rounded-xl p-6">
+        <div class="flex items-start space-x-3">
+            <div class="w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                <i class="fas fa-exclamation-triangle text-amber-600"></i>
+            </div>
+            <div>
+                <h3 class="text-lg font-semibold text-amber-800 mb-2">Lưu Ý Quan Trọng</h3>
+                <ul class="text-sm text-amber-700 space-y-1">
+                    <li>• Việc xóa dữ liệu sẽ không thể hoàn tác</li>
+                    <li>• Hãy đảm bảo đã sao lưu dữ liệu quan trọng trước khi thực hiện xóa</li>
+                    <li>• Sử dụng bộ lọc để giới hạn phạm vi dữ liệu cần quản lý</li>
+                    <li>• Chỉ xóa những dữ liệu thực sự không cần thiết</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-input:focus {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+    }
+    
+    .btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    }
+    
+    .table-row-animation:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
+    
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .fade-in-up {
+        animation: fadeInUp 0.5s ease-out;
+    }
+    
+    .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255, 255, 255, 0.8);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+    }
+    
+    .hidden { display: none !important; }
+</style>
+{% endblock %}

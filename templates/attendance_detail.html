@@ -1,0 +1,301 @@
+{% extends 'base.html' %}
+
+{% block page_title %}Chi Tiết Chấm Công{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto space-y-8">
+    <!-- Header Section -->
+    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900">Chi Tiết Chấm Công</h1>
+            <p class="mt-2 text-gray-600">Xem chi tiết thông tin chấm công của nhân viên</p>
+        </div>
+        <div class="mt-4 lg:mt-0 flex items-center space-x-3">
+            <a href="{{ url_for('admin_edit_attendance', att_id=att.id) }}" 
+               class="btn bg-gradient-to-r from-blue-600 to-indigo-700 text-white px-4 py-2 rounded-lg hover:from-blue-700 hover:to-indigo-800 focus:ring-4 focus:ring-blue-200 transition-all duration-200">
+                <i class="fas fa-edit mr-2"></i>Chỉnh Sửa
+            </a>
+            <a href="{{ url_for('admin_attendance') }}" 
+               class="btn bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 focus:ring-4 focus:ring-gray-200 transition-all duration-200">
+                <i class="fas fa-arrow-left mr-2"></i>Quay Lại
+            </a>
+        </div>
+    </div>
+
+    <!-- Employee Info Card -->
+    <div class="glassmorphism card-shadow rounded-xl p-6">
+        <div class="flex items-center mb-6">
+            <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center mr-4">
+                <span class="text-white font-bold text-lg">
+                    {{ att.user.full_name[0].upper() if att.user.full_name else att.user.username[0].upper() }}
+                </span>
+            </div>
+            <div>
+                <h2 class="text-xl font-bold text-gray-900">{{ att.user.full_name or att.user.username }}</h2>
+                <p class="text-gray-600">
+                    <i class="fas fa-calendar-alt mr-2"></i>
+                    {{ att.date.strftime('%A, %d/%m/%Y') }}
+                </p>
+            </div>
+        </div>
+
+        <!-- Status Badge -->
+        <div class="mb-6">
+            {% if att.morning_check_in or att.afternoon_check_in %}
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                    <i class="fas fa-check-circle mr-2"></i>Đã chấm công
+                </span>
+            {% elif leave %}
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800">
+                    <i class="fas fa-calendar-times mr-2"></i>Nghỉ phép
+                </span>
+            {% else %}
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800">
+                    <i class="fas fa-times-circle mr-2"></i>Chưa chấm công
+                </span>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if att.morning_check_in or att.afternoon_check_in %}
+        <!-- Attendance Details -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Morning Shift -->
+            {% if att.morning_check_in %}
+            <div class="glassmorphism card-shadow rounded-xl p-6">
+                <div class="flex items-center mb-4">
+                    <div class="w-10 h-10 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-lg flex items-center justify-center mr-3">
+                        <i class="fas fa-sun text-white"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-bold text-gray-900">Ca Sáng</h3>
+                        <p class="text-sm text-gray-600">Morning shift details</p>
+                    </div>
+                </div>
+
+                <div class="space-y-4">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="bg-gray-50 rounded-lg p-3">
+                            <div class="flex items-center text-sm text-gray-600 mb-1">
+                                <i class="fas fa-sign-in-alt mr-2 text-green-600"></i>Giờ vào
+                            </div>
+                            <div class="text-lg font-semibold text-gray-900">
+                                {{ att.morning_check_in.strftime('%H:%M') if att.morning_check_in else 'N/A' }}
+                            </div>
+                        </div>
+                        <div class="bg-gray-50 rounded-lg p-3">
+                            <div class="flex items-center text-sm text-gray-600 mb-1">
+                                <i class="fas fa-sign-out-alt mr-2 text-red-600"></i>Giờ ra
+                            </div>
+                            <div class="text-lg font-semibold text-gray-900">
+                                {{ att.morning_check_out.strftime('%H:%M') if att.morning_check_out else 'N/A' }}
+                            </div>
+                        </div>
+                    </div>
+
+                    {% if is_late %}
+                    <div class="bg-red-50 border border-red-200 rounded-lg p-3">
+                        <div class="flex items-center">
+                            <i class="fas fa-clock text-red-500 mr-2"></i>
+                            <span class="text-red-800 font-medium">Đi muộn (Sau 08:00)</span>
+                        </div>
+                        {% if att.morning_late_reason %}
+                        <p class="mt-2 text-sm text-red-700">
+                            <strong>Lý do:</strong> {{ att.morning_late_reason }}
+                        </p>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+
+                    {% if att.image_proof %}
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center">
+                                <i class="fas fa-camera text-blue-500 mr-2"></i>
+                                <span class="text-blue-800 font-medium">Ảnh minh chứng</span>
+                            </div>
+                            <a href="{{ url_for('static', filename='images/' + att.image_proof) }}" 
+                               target="_blank" 
+                               class="inline-flex items-center px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200">
+                                <i class="fas fa-eye mr-1"></i>Xem
+                            </a>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Afternoon Shift -->
+            {% if att.afternoon_check_in %}
+            <div class="glassmorphism card-shadow rounded-xl p-6">
+                <div class="flex items-center mb-4">
+                    <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center mr-3">
+                        <i class="fas fa-moon text-white"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-bold text-gray-900">Ca Chiều</h3>
+                        <p class="text-sm text-gray-600">Afternoon shift details</p>
+                    </div>
+                </div>
+
+                <div class="space-y-4">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="bg-gray-50 rounded-lg p-3">
+                            <div class="flex items-center text-sm text-gray-600 mb-1">
+                                <i class="fas fa-sign-in-alt mr-2 text-green-600"></i>Giờ vào
+                            </div>
+                            <div class="text-lg font-semibold text-gray-900">
+                                {{ att.afternoon_check_in.strftime('%H:%M') if att.afternoon_check_in else 'N/A' }}
+                            </div>
+                        </div>
+                        <div class="bg-gray-50 rounded-lg p-3">
+                            <div class="flex items-center text-sm text-gray-600 mb-1">
+                                <i class="fas fa-sign-out-alt mr-2 text-red-600"></i>Giờ ra
+                            </div>
+                            <div class="text-lg font-semibold text-gray-900">
+                                {{ att.afternoon_check_out.strftime('%H:%M') if att.afternoon_check_out else 'N/A' }}
+                            </div>
+                        </div>
+                    </div>
+
+                    {% if is_late %}
+                    <div class="bg-red-50 border border-red-200 rounded-lg p-3">
+                        <div class="flex items-center">
+                            <i class="fas fa-clock text-red-500 mr-2"></i>
+                            <span class="text-red-800 font-medium">Thông tin</span>
+                        </div>
+                        {% if att.afternoon_late_reason %}
+                        <p class="mt-2 text-sm text-red-700">
+                            <strong>Lý do:</strong> {{ att.afternoon_late_reason }}
+                        </p>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+
+                    {% if att.image_proof %}
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center">
+                                <i class="fas fa-camera text-blue-500 mr-2"></i>
+                                <span class="text-blue-800 font-medium">Ảnh minh chứng</span>
+                            </div>
+                            <a href="{{ url_for('static', filename='images/' + att.image_proof) }}" 
+                               target="_blank" 
+                               class="inline-flex items-center px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200">
+                                <i class="fas fa-eye mr-1"></i>Xem
+                            </a>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Summary Card -->
+        <div class="glassmorphism card-shadow rounded-xl p-6">
+            <div class="flex items-center mb-4">
+                <div class="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg flex items-center justify-center mr-3">
+                    <i class="fas fa-clock text-white"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold text-gray-900">Tổng Kết</h3>
+                    <p class="text-sm text-gray-600">Thời gian làm việc trong ngày</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="text-center p-4 bg-blue-50 rounded-lg">
+                    <div class="text-2xl font-bold text-blue-600">{{ '{:.2f}'.format(total_time) }}</div>
+                    <div class="text-sm text-blue-800 font-medium">Giờ làm việc</div>
+                </div>
+                <div class="text-center p-4 bg-green-50 rounded-lg">
+                    <div class="text-2xl font-bold text-green-600">
+                        {% if att.morning_check_in and att.afternoon_check_in %}2{% elif att.morning_check_in or att.afternoon_check_in %}1{% else %}0{% endif %}
+                    </div>
+                    <div class="text-sm text-green-800 font-medium">Ca làm việc</div>
+                </div>
+                <div class="text-center p-4 bg-purple-50 rounded-lg">
+                    <div class="text-2xl font-bold text-purple-600">
+                        {% if is_late %}1{% else %}0{% endif %}
+                    </div>
+                    <div class="text-sm text-purple-800 font-medium">Lần đi muộn</div>
+                </div>
+            </div>
+        </div>
+
+    {% elif leave %}
+        <!-- Leave Details -->
+        <div class="glassmorphism card-shadow rounded-xl p-6">
+            <div class="flex items-center mb-4">
+                <div class="w-10 h-10 bg-gradient-to-br from-yellow-500 to-orange-600 rounded-lg flex items-center justify-center mr-3">
+                    <i class="fas fa-calendar-times text-white"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold text-gray-900">Thông Tin Nghỉ Phép</h3>
+                    <p class="text-sm text-gray-600">Leave request details</p>
+                </div>
+            </div>
+
+            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                <div class="flex items-start">
+                    <i class="fas fa-info-circle text-yellow-500 mr-3 mt-1"></i>
+                    <div>
+                        <h4 class="font-medium text-yellow-800 mb-2">Lý do nghỉ phép:</h4>
+                        <p class="text-yellow-700">{{ leave.reason }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    {% else %}
+        <!-- No Data -->
+        <div class="glassmorphism card-shadow rounded-xl p-12 text-center">
+            <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-question-circle text-gray-400 text-2xl"></i>
+            </div>
+            <h3 class="text-lg font-medium text-gray-900 mb-2">Không có thông tin</h3>
+            <p class="text-gray-500">Không có thông tin chấm công hoặc nghỉ phép cho ngày này</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Glassmorphism effect */
+    .glassmorphism {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .card-shadow {
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    }
+    
+    /* Enhanced hover effects */
+    .glassmorphism:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+        transition: all 0.3s ease;
+    }
+    
+    /* Button hover effects */
+    .btn:hover {
+        transform: translateY(-1px);
+    }
+    
+    /* Responsive improvements */
+    @media (max-width: 768px) {
+        .grid-cols-2 {
+            grid-template-columns: 1fr;
+        }
+        
+        .lg\:grid-cols-2 {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}

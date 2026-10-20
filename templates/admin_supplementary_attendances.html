@@ -1,0 +1,140 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="glassmorphism card-shadow rounded-xl p-6">
+        <div class="flex items-center mb-6">
+            <div class="w-10 h-10 bg-gradient-to-br from-orange-500 to-red-600 rounded-lg flex items-center justify-center mr-3">
+                <i class="fas fa-user-plus text-white"></i>
+            </div>
+            <div>
+                <h2 class="text-base font-semibold text-gray-900">Duyệt Chấm Công Bổ Sung</h2>
+                <p class="text-xs text-gray-600">Xem xét và phê duyệt các yêu cầu chấm công bổ sung</p>
+            </div>
+        </div>
+        
+        {% if supp_atts %}
+            <div class="overflow-hidden rounded-lg border border-gray-200">
+                <div class="overflow-x-auto">
+                    <table class="w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Nhân Viên
+                                </th>
+                                <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Thời Gian
+                                </th>
+                                <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Chi Tiết
+                                </th>
+                                <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Lý Do
+                                </th>
+                                <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Minh Chứng
+                                </th>
+                                <th scope="col" class="px-6 py-4 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Hành Động
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            {% for att in supp_atts %}
+                                <tr class="hover:bg-gray-50 transition-colors duration-150">
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="flex items-center">
+                                            <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center mr-3">
+                                                <span class="text-white font-semibold text-xs">
+                                                    {{ att.user.full_name[0].upper() if att.user.full_name else att.user.username[0].upper() }}
+                                                </span>
+                                            </div>
+                                            <div>
+                                                <div class="text-xs font-medium text-gray-900">
+                                                    {{ att.user.full_name or att.user.username }}
+                                                </div>
+                                                <div class="text-xs text-gray-500">
+                                                    @{{ att.user.username }}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-xs text-gray-900">
+                                            <div class="font-medium">{{ att.date.strftime('%d/%m/%Y') }}</div>
+                                            <div class="text-gray-500">{{ datetime.combine(att.date, att.start_time).strftime('%H:%M') }}</div>
+                                        </div>
+                                    </td>
+                                    
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                            <i class="fas fa-sun mr-1" {% if att.shift == 'afternoon' %}style="display:none"{% endif %}></i>
+                                            <i class="fas fa-moon mr-1" {% if att.shift == 'morning' %}style="display:none"{% endif %}></i>
+                                            {{ 'Ca sáng' if att.shift == 'morning' else 'Ca chiều' }}
+                                        </span>
+                                    </td>
+                                    
+                                    <td class="px-6 py-4">
+                                        <div class="text-xs text-gray-900 max-w-xs">
+                                            {{ att.reason or 'Không có lý do cụ thể' }}
+                                        </div>
+                                    </td>
+                                    
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        {% if att.image_proof %}
+                                            <a href="{{ url_for('static', filename='images/' + att.image_proof) }}" 
+                                               target="_blank" 
+                                               class="inline-flex items-center px-3 py-1 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors duration-150">
+                                                <i class="fas fa-image mr-1"></i>
+                                                Xem ảnh
+                                            </a>
+                                        {% else %}
+                                            <span class="text-gray-400 text-xs">Không có</span>
+                                        {% endif %}
+                                    </td>
+                                    
+                                    <td class="px-6 py-4 text-center">
+                                        <div class="flex flex-col space-y-3">
+                                            <!-- Approve Form -->
+                                            <form method="POST" action="{{ url_for('approve_supplementary_attendance', supp_id=att.id) }}" class="space-y-2">
+                                                <textarea name="admin_response" 
+                                                         placeholder="Phản hồi của bạn..." 
+                                                         rows="2"
+                                                         class="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-green-500 focus:border-green-500 resize-none"></textarea>
+                                                <button type="submit" 
+                                                        class="w-full btn bg-gradient-to-r from-green-600 to-emerald-700 text-white px-4 py-2 rounded-lg hover:from-green-700 hover:to-emerald-800 transition-all duration-200">
+                                                    <i class="fas fa-check mr-1"></i>
+                                                    Duyệt
+                                                </button>
+                                            </form>
+                                            
+                                            <!-- Reject Form -->
+                                            <form method="POST" action="{{ url_for('reject_supplementary_attendance', supp_id=att.id) }}" class="space-y-2">
+                                                <textarea name="admin_response" 
+                                                         placeholder="Lý do từ chối..." 
+                                                         rows="2"
+                                                         class="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-red-500 focus:border-red-500 resize-none"></textarea>
+                                                <button type="submit" 
+                                                        class="w-full btn bg-gradient-to-r from-red-600 to-red-700 text-white px-4 py-2 rounded-lg hover:from-red-700 hover:to-red-800 transition-all duration-200">
+                                                    <i class="fas fa-times mr-1"></i>
+                                                    Từ chối
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        {% else %}
+            <div class="text-center py-12">
+                <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-clipboard-check text-gray-400 text-2xl"></i>
+                </div>
+                <h3 class="text-base font-medium text-gray-900 mb-2">Không có yêu cầu chờ duyệt</h3>
+                <p class="text-gray-500">Tất cả yêu cầu chấm công bổ sung đã được xử lý</p>
+            </div>
+        {% endif %}
+    </div>
+{% endblock %}

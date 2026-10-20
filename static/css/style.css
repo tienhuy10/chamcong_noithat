@@ -1,0 +1,2 @@
+td[style*="red"] { background-color: red !important; color: white; }
+td[style*="green"] { background-color: green !important; color: white; }

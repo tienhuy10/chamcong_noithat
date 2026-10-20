@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Thiết Lập Thời Gian Ca Làm</h2>
+<form method="post">
+    <label>Ca Sáng Bắt Đầu: <input type="time" name="morning_start" value="{{ config.morning_start.strftime('%H:%M') }}" required></label><br>
+    <label>Ca Sáng Kết Thúc: <input type="time" name="morning_end" value="{{ config.morning_end.strftime('%H:%M') }}" required></label><br>
+    <label>Ca Chiều Min: <input type="time" name="afternoon_min" value="{{ config.afternoon_min.strftime('%H:%M') }}" required></label><br>
+    <label>Ca Chiều Max: <input type="time" name="afternoon_max" value="{{ config.afternoon_max.strftime('%H:%M') }}" required></label><br>
+    <label>Số Giờ Tối Thiểu Ca Chiều: <input type="number" name="afternoon_hours" value="{{ config.afternoon_hours }}" min="1" required></label><br>
+    <button type="submit">Cập Nhật</button>
+</form>
+{% endblock %}

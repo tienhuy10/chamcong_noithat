@@ -1,0 +1,402 @@
+{% extends 'base.html' %}
+
+{% block title %}Chấm Công - Hệ thống Chấm Công{% endblock %}
+{% block page_title %}Chấm Công{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto space-y-6">
+    <!-- Header Section -->
+    <div class="bg-white rounded-lg card-shadow p-6 border border-gray-200">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-4">
+                <div
+                    class="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-user-clock text-white text-2xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-800">Hệ Thống Chấm Công</h1>
+                    <p class="text-gray-600 text-lg">{{ 'Ca Sáng' if is_morning else 'Ca Chiều' if is_afternoon else
+                        'Ngoài Giờ Làm' }}</p>
+                </div>
+            </div>
+            <div class="text-right">
+                <p class="text-sm text-gray-500">Ngày hôm nay</p>
+                <p class="text-xl font-semibold text-gray-800" id="current-date"></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Status Check -->
+    {% if (is_morning and already_checked.morning['in'] and already_checked.morning['out']) or (is_afternoon and
+    already_checked.afternoon['in'] and already_checked.afternoon['out']) %}
+    <div class="bg-white rounded-lg card-shadow p-8 border border-gray-200 text-center">
+        <div
+            class="w-20 h-20 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
+            <i class="fas fa-check-circle text-white text-3xl"></i>
+        </div>
+        <h2 class="text-2xl font-bold text-gray-800 mb-4">Đã Hoàn Thành Chấm Công!</h2>
+        <p class="text-lg text-gray-600 mb-8">Bạn đã chấm công ca {{ 'sáng' if is_morning else 'chiều' }} hôm nay thành
+            công.</p>
+        <a href="{{ url_for('employee_dashboard') }}"
+            class="btn inline-flex items-center px-8 py-4 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold rounded-lg hover:from-blue-600 hover:to-blue-700">
+            <i class="fas fa-arrow-left mr-3"></i>
+            Quay Về Dashboard
+        </a>
+    </div>
+    {% else %}
+    <!-- Main Attendance Form -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Camera Section -->
+        <div class="bg-white rounded-lg card-shadow p-6 border border-gray-200">
+            <div class="mb-6">
+                <h3 class="text-xl font-bold text-gray-800 mb-2 flex items-center">
+                    <i class="fas fa-camera mr-3 text-blue-600"></i>
+                    Camera Chấm Công
+                </h3>
+                <p class="text-gray-600">Hệ thống lưu vị trí GPS<br>Vui lòng chụp tại nơi làm việc</p>
+            </div>
+
+            <div class="relative">
+                <video id="video" class="w-full h-64 object-cover rounded-lg bg-gray-100 border-2 border-gray-200"
+                    autoplay playsinline muted>
+                </video>
+                <canvas id="canvas" width="400" height="300" style="display: none;"></canvas>
+
+                <!-- Camera Controls -->
+                <div class="absolute bottom-4 left-1/2 transform -translate-x-1/2">
+                    <button id="capture" type="button"
+                        class="btn w-16 h-16 bg-white rounded-full card-shadow hover:shadow-lg flex items-center justify-center">
+                        <div
+                            class="w-12 h-12 bg-gradient-to-br from-red-500 to-red-600 rounded-full flex items-center justify-center">
+                            <i class="fas fa-camera text-white"></i>
+                        </div>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Form Section -->
+        <div class="bg-white rounded-lg card-shadow p-6 border border-gray-200">
+            <div class="mb-6">
+                <h3 class="text-xl font-bold text-gray-800 mb-2 flex items-center">
+                    <i class="fas fa-clipboard-list mr-3 text-green-600"></i>
+                    Thông Tin Chấm Công
+                </h3>
+                <p class="text-gray-600">Điền thông tin chi tiết</p>
+            </div>
+
+            <form method="POST" id="attendance_form" enctype="multipart/form-data" class="space-y-6">
+                <!-- Attendance Type -->
+                <div>
+                    <label class="block text-gray-700 font-semibold mb-3">
+                        <i class="fas fa-clock mr-2"></i>
+                        Loại Chấm Công
+                    </label>
+                    <select name="type" id="type_input" required
+                        class="form-input w-full p-4 border border-gray-300 rounded-lg focus:outline-none bg-white">
+                        {% if is_morning %}
+                        {% if not already_checked.morning['in'] %}
+                        <option value="in">🌅 Check-In Sáng</option>
+                        {% endif %}
+                        {% if already_checked.morning['in'] and not already_checked.morning['out'] %}
+                        <option value="out">🌇 Check-Out Sáng</option>
+                        {% endif %}
+                        {% elif is_afternoon %}
+                        {% if not already_checked.afternoon['in'] %}
+                        <option value="in">☀️ Check-In Chiều</option>
+                        {% endif %}
+                        {% if already_checked.afternoon['in'] and not already_checked.afternoon['out'] %}
+                        <option value="out">🌆 Check-Out Chiều</option>
+                        {% endif %}
+                        {% endif %}
+                    </select>
+                </div>
+
+                <!-- Late Reason / Work Type -->
+                {% if show_late_reason %}
+                <div>
+                    <label class="block text-gray-700 font-semibold mb-3">
+                        <i class="fas fa-comment-alt mr-2"></i>
+                        {{ 'Lý Do Đi Muộn' if is_morning else 'Loại Giờ Làm' }}
+                    </label>
+                    <textarea name="late_reason" id="late_reason" required rows="4"
+                        placeholder="{{ 'Nhập lý do đi muộn...' if is_morning else 'Bạn làm giờ hành chính, ca trực hay tăng ca...' }}"
+                        class="form-input w-full p-4 border border-gray-300 rounded-lg focus:outline-none resize-none bg-white"></textarea>
+                    <p id="late_reason_error" class="text-red-500 text-sm mt-2 hidden flex items-center">
+                        <i class="fas fa-exclamation-triangle mr-2"></i>
+                        {{ 'Vui lòng nhập lý do đi muộn!' if is_morning else 'Vui lòng nhập loại giờ làm!' }}
+                    </p>
+                </div>
+                {% endif %}
+
+                <!-- Action Buttons
+                    <div class="space-y-4">
+                        <button id="location" type="button"
+                                class="btn w-full flex items-center justify-center px-6 py-4 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-semibold rounded-lg hover:from-emerald-600 hover:to-emerald-700">
+                            <i class="fas fa-map-marker-alt mr-3"></i>
+                            Chấm Công Bằng Vị Trí
+                        </button>
+                    </div> -->
+
+                <input type="file" name="image" id="image_input" style="display: none" />
+                <input type="hidden" name="location" id="location_input" />
+            </form>
+        </div>
+    </div>
+
+    <!-- Preview Section -->
+    <div id="preview-container" class="bg-white rounded-lg card-shadow p-6 border border-gray-200"
+        style="display: none;">
+        <div class="text-center">
+            <h3 class="text-xl font-bold text-gray-800 mb-6 flex items-center justify-center">
+                <i class="fas fa-eye mr-3 text-purple-600"></i>
+                Xem Trước Ảnh Chấm Công
+            </h3>
+            <div class="relative inline-block">
+                <img id="preview"
+                    class="w-80 h-60 object-cover rounded-lg card-shadow mx-auto border-2 border-blue-200" />
+            </div>
+
+            <div class="flex flex-col sm:flex-row justify-center gap-4 mt-8">
+                <button id="confirm" type="button"
+                    class="btn flex items-center justify-center px-8 py-4 bg-gradient-to-r from-green-500 to-green-600 text-white font-semibold rounded-lg hover:from-green-600 hover:to-green-700">
+                    <i class="fas fa-check mr-3"></i>
+                    Xác Nhận Chấm Công
+                </button>
+                <button id="retake" type="button"
+                    class="btn flex items-center justify-center px-8 py-4 bg-gradient-to-r from-red-500 to-red-600 text-white font-semibold rounded-lg hover:from-red-600 hover:to-red-700">
+                    <i class="fas fa-redo mr-3"></i>
+                    Chụp Lại
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Instructions Card -->
+    <div class="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg card-shadow p-6 border border-yellow-200">
+        <div class="flex items-start space-x-4">
+            <div
+                class="w-12 h-12 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-lg flex items-center justify-center flex-shrink-0">
+                <i class="fas fa-info-circle text-white"></i>
+            </div>
+            <div>
+                <h4 class="text-lg font-semibold text-gray-800 mb-3">Hướng Dẫn Chấm Công</h4>
+                <ul class="space-y-2 text-gray-700">
+                    <li class="flex items-center">
+                        <i class="fas fa-check-circle text-green-500 mr-3 flex-shrink-0"></i>
+                        Đảm bảo khuôn mặt rõ nét trong khung hình
+                    </li>
+                    <li class="flex items-center">
+                        <i class="fas fa-check-circle text-green-500 mr-3 flex-shrink-0"></i>
+                        Chấm công tại vị trí làm việc được phép
+                    </li>
+                    <li class="flex items-center">
+                        <i class="fas fa-check-circle text-green-500 mr-3 flex-shrink-0"></i>
+                        {{ 'Giải thích lý do nếu đi muộn' if is_morning else 'Ghi rõ loại giờ làm việc' }}
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<script src="{{ url_for('static', filename='js/camera.js') }}"></script>
+<script src="{{ url_for('static', filename='js/geolocation.js') }}"></script>
+
+<script>
+    // Update current date
+    function updateCurrentDate() {
+        const now = new Date();
+        const dateString = now.toLocaleDateString('vi-VN', {
+            weekday: 'long',
+            day: 'numeric',
+            month: 'numeric',
+            year: 'numeric'
+        });
+        const dateElement = document.getElementById('current-date');
+        if (dateElement) {
+            dateElement.textContent = dateString;
+        }
+    }
+
+    // Enhanced form handling
+    document.addEventListener('DOMContentLoaded', function () {
+        console.log("Initializing attendance form script");
+        updateCurrentDate();
+
+        const captureButton = document.getElementById("capture");
+        const confirmButton = document.getElementById("confirm");
+        const retakeButton = document.getElementById("retake");
+        const form = document.getElementById("attendance_form");
+        const lateReasonInput = document.getElementById("late_reason");
+        const lateReasonError = document.getElementById("late_reason_error");
+        const video = document.getElementById("video");
+        const previewContainer = document.getElementById("preview-container");
+
+        // Loading state helper
+        function setButtonLoading(button, isLoading, originalText = null) {
+            if (!button) return;
+
+            const icon = button.querySelector('i');
+            if (isLoading) {
+                button.disabled = true;
+                button.classList.add('opacity-75');
+                if (icon) {
+                    icon.className = 'fas fa-spinner fa-spin mr-3';
+                }
+                if (originalText) {
+                    button.innerHTML = `<i class="fas fa-spinner fa-spin mr-3"></i>${originalText}`;
+                }
+            } else {
+                button.disabled = false;
+                button.classList.remove('opacity-75');
+            }
+        }
+
+        // Capture button event
+        if (captureButton && video) {
+            captureButton.addEventListener("click", () => {
+                console.log("Capture button clicked");
+                setButtonLoading(captureButton, true);
+
+                setTimeout(() => {
+                    try {
+                        const canvas = document.getElementById("canvas");
+                        const preview = document.getElementById("preview");
+                        const context = canvas.getContext("2d");
+
+                        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                        preview.src = canvas.toDataURL("image/jpeg");
+
+                        if (previewContainer) {
+                            previewContainer.style.display = "block";
+                            previewContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }
+                    } catch (error) {
+                        console.error("Error capturing image:", error);
+                        alert("Lỗi khi chụp ảnh. Vui lòng thử lại.");
+                    } finally {
+                        setButtonLoading(captureButton, false);
+                    }
+                }, 300);
+            });
+        }
+
+        // Confirm button event
+        if (confirmButton && form) {
+            confirmButton.addEventListener("click", () => {
+                console.log("Confirm button clicked");
+
+                // Validate form
+                if (lateReasonInput && lateReasonInput.hasAttribute('required') && lateReasonInput.value.trim() === "") {
+                    console.log("Late reason/work type is empty, showing error");
+                    if (lateReasonError) lateReasonError.classList.remove("hidden");
+                    lateReasonInput.focus();
+                    lateReasonInput.classList.add('border-red-500');
+                    return;
+                }
+
+                setButtonLoading(confirmButton, true, "Đang xử lý...");
+
+                const canvas = document.getElementById("canvas");
+                const imageInput = document.getElementById("image_input");
+
+                if (canvas && imageInput) {
+                    canvas.toBlob((blob) => {
+                        console.log("Converting canvas to file");
+                        const file = new File([blob], "attendance_capture.jpg", { type: "image/jpeg" });
+                        const dataTransfer = new DataTransfer();
+                        dataTransfer.items.add(file);
+                        imageInput.files = dataTransfer.files;
+
+                        console.log("Submitting form");
+                        form.submit();
+                    });
+                }
+            });
+        }
+
+        // Retake button event
+        if (retakeButton && previewContainer) {
+            retakeButton.addEventListener("click", () => {
+                console.log("Retake button clicked");
+                previewContainer.style.display = "none";
+                const imageInput = document.getElementById("image_input");
+                if (imageInput) imageInput.value = "";
+            });
+        }
+
+        // Clear error on input
+        if (lateReasonInput && lateReasonError) {
+            lateReasonInput.addEventListener('input', () => {
+                if (lateReasonInput.value.trim() !== "") {
+                    lateReasonError.classList.add("hidden");
+                    lateReasonInput.classList.remove('border-red-500');
+                }
+            });
+        }
+
+        // Initialize camera
+        if (video) {
+            navigator.mediaDevices.getUserMedia({
+                video: { facingMode: "user" }  // facingMode: "user" = camera trước, "environment" = camera sau
+            })
+                .then(stream => {
+                    video.srcObject = stream;
+                    video.play();
+                })
+                .catch(err => {
+                    console.error("Camera error:", err);
+                    alert("Không thể truy cập camera. Vui lòng kiểm tra quyền truy cập.");
+                });
+        }
+
+    });
+</script>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Video border animation - simplified */
+    #video {
+        border: 2px solid #e5e7eb;
+        transition: border-color 0.2s ease;
+    }
+
+    #video:hover {
+        border-color: #3b82f6;
+    }
+
+    /* Smooth preview container display */
+    #preview-container {
+        scroll-margin-top: 2rem;
+    }
+
+    /* Focus improvements */
+    .form-input:focus {
+        border-color: #3b82f6 !important;
+    }
+
+    /* Loading state */
+    .btn:disabled {
+        cursor: not-allowed;
+    }
+
+    /* Mobile optimizations */
+    @media (max-width: 640px) {
+        #video {
+            height: 200px;
+        }
+
+        #preview {
+            width: 100%;
+            max-width: 320px;
+        }
+
+        .flex.flex-col.sm\\:flex-row {
+            flex-direction: column;
+        }
+    }
+</style>
+{% endblock %}

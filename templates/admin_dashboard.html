@@ -1,0 +1,406 @@
+{% extends 'base.html' %}
+
+{% block title %}Admin Dashboard - Hệ thống Chấm Công{% endblock %}
+{% block page_title %}Bảng Điều Khiển Quản Trị{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto space-y-6">
+
+    <!-- Welcome Header -->
+    <div class="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-xl p-6 text-white">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-2xl font-bold mb-1">Dashboard Quản Trị</h1>
+                <p class="text-blue-100">Tổng quan hệ thống chấm công</p>
+            </div>
+            <div class="text-right">
+                <div class="text-xl font-bold" id="dashboard-date"></div>
+                <div class="text-blue-100 text-sm">Hôm nay</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- KPI Cards -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <!-- Total Employees -->
+        <div class="bg-white p-6 rounded-xl shadow-sm border hover:shadow-md transition-shadow">
+            <div class="flex items-center">
+                <div class="p-3 bg-blue-100 rounded-lg">
+                    <i class="fas fa-users text-blue-600 text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-gray-500 text-sm">Tổng NV</p>
+                    <p class="text-2xl font-bold text-gray-800">{{ total_employees }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Present -->
+        <div class="bg-white p-6 rounded-xl shadow-sm border hover:shadow-md transition-shadow">
+            <div class="flex items-center">
+                <div class="p-3 bg-green-100 rounded-lg">
+                    <i class="fas fa-user-check text-green-600 text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-gray-500 text-sm">Có Mặt</p>
+                    <p class="text-2xl font-bold text-green-600">{{ present }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Absent -->
+        <div class="bg-white p-6 rounded-xl shadow-sm border hover:shadow-md transition-shadow">
+            <div class="flex items-center">
+                <div class="p-3 bg-red-100 rounded-lg">
+                    <i class="fas fa-user-times text-red-600 text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-gray-500 text-sm">Vắng Mặt</p>
+                    <p class="text-2xl font-bold text-red-500">{{ absent }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Approved Leaves -->
+        <div class="bg-white p-6 rounded-xl shadow-sm border hover:shadow-md transition-shadow">
+            <div class="flex items-center">
+                <div class="p-3 bg-purple-100 rounded-lg">
+                    <i class="fas fa-calendar-times text-purple-600 text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-gray-500 text-sm">Nghỉ Phép</p>
+                    <p class="text-2xl font-bold text-purple-500">{{ approved_leaves }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Pie Chart -->
+        <div class="bg-white p-6 rounded-xl shadow-sm border">
+            <h3 class="text-lg font-semibold text-gray-800 mb-4">Tỷ Lệ Chấm Công Hôm Nay</h3>
+            <div class="h-64">
+                <canvas id="pieChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Line Chart -->
+        <div class="bg-white p-6 rounded-xl shadow-sm border">
+            <h3 class="text-lg font-semibold text-gray-800 mb-4">Xu Hướng Tháng {{ month }}/{{ year }}</h3>
+            <div class="h-64">
+                <canvas id="lineChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pending Requests -->
+    <div class="bg-white rounded-xl shadow-sm border">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-800 flex items-center">
+                <i class="fas fa-clock text-orange-500 mr-2"></i>
+                Yêu Cầu Chờ Duyệt
+            </h3>
+        </div>
+
+        <div class="p-6">
+            <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+
+                <!-- Supplementary Attendance -->
+                <div>
+                    <div class="flex items-center justify-between mb-4">
+                        <h4 class="font-medium text-gray-700">Chấm Công Bổ Sung</h4>
+                        <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-sm">
+                            {{ pending_supp_atts|length }}
+                        </span>
+                    </div>
+
+                    {% if pending_supp_atts %}
+                    <div class="space-y-3">
+                        {% for supp in pending_supp_atts %}
+                        <div class="border border-gray-200 rounded-lg p-4">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="font-medium text-gray-900">{{ supp.user.full_name }}</p>
+                                    <p class="text-sm text-gray-500">{{ supp.date.strftime('%d/%m/%Y') }} - {{
+                                        supp.shift }}</p>
+                                    <p class="text-xs text-gray-400">{{ supp.check_type }}</p>
+                                </div>
+                                <div class="flex space-x-2">
+                                    <form action="{{ url_for('approve_supplementary_attendance', supp_id=supp.id) }}"
+                                        method="POST" class="inline">
+                                        <button type="submit"
+                                            class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-sm">
+                                            Duyệt
+                                        </button>
+                                    </form>
+                                    <form action="{{ url_for('reject_supplementary_attendance', supp_id=supp.id) }}"
+                                        method="POST" class="inline">
+                                        <button type="submit"
+                                            class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm">
+                                            Từ chối
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-8 text-gray-500">
+                        <i class="fas fa-inbox text-2xl mb-2"></i>
+                        <p>Không có yêu cầu nào</p>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Leave Requests -->
+                <div>
+                    <div class="flex items-center justify-between mb-4">
+                        <h4 class="font-medium text-gray-700">Yêu Cầu Nghỉ Phép</h4>
+                        <span class="bg-purple-100 text-purple-800 px-2 py-1 rounded text-sm">
+                            {{ pending_leaves|length }}
+                        </span>
+                    </div>
+
+                    {% if pending_leaves %}
+                    <div class="space-y-3">
+                        {% for leave in pending_leaves %}
+                        <div class="border border-gray-200 rounded-lg p-4">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="font-medium text-gray-900">{{ leave.user.full_name }}</p>
+                                    <p class="text-sm text-gray-500">{{ leave.date.strftime('%d/%m/%Y') }} - {{
+                                        leave.shift }}</p>
+                                </div>
+                                <div class="flex space-x-2">
+                                    <form action="{{ url_for('approve_leave', leave_id=leave.id) }}" method="POST"
+                                        class="inline">
+                                        <button type="submit"
+                                            class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-sm">
+                                            Duyệt
+                                        </button>
+                                    </form>
+                                    <form action="{{ url_for('reject_leave', leave_id=leave.id) }}" method="POST"
+                                        class="inline">
+                                        <button type="submit"
+                                            class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm">
+                                            Từ chối
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-8 text-gray-500">
+                        <i class="fas fa-calendar-check text-2xl mb-2"></i>
+                        <p>Không có yêu cầu nào</p>
+                    </div>
+                    {% endif %}
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Weekly Attendance -->
+    <div class="bg-white rounded-xl shadow-sm border">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-800 flex items-center">
+                <i class="fas fa-calendar-week text-blue-500 mr-2"></i>
+                Chấm Công Tuần Này
+            </h3>
+        </div>
+
+        <div class="p-6">
+            {% if weekly_attendances %}
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nhân Viên</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ngày</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Vào Sáng</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ra Sáng</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Vào Chiều</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ra Chiều</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Giờ Làm</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Lý do</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Trạng Thái</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ảnh</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200">
+                        {% for att in weekly_attendances %}
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-4 py-3">
+                                <div class="font-medium text-gray-900">{{ att.user.full_name if att.user else 'Unknown'
+                                    }}</div>
+                                <div class="text-xs text-gray-500"># {{ att.id }}</div>
+                            </td>
+                            <td class="px-4 py-3 font-medium">{{ att.date.strftime('%d/%m/%Y') }}</td>
+                            <td class="px-4 py-3">{{ att.morning_check_in.strftime('%H:%M') if att.morning_check_in else
+                                '-' }}</td>
+                            <td class="px-4 py-3">{{ att.morning_check_out.strftime('%H:%M') if att.morning_check_out
+                                else '-' }}</td>
+                            <td class="px-4 py-3">{{ att.afternoon_check_in.strftime('%H:%M') if att.afternoon_check_in
+                                else '-' }}</td>
+                            <td class="px-4 py-3">{{ att.afternoon_check_out.strftime('%H:%M') if
+                                att.afternoon_check_out else '-' }}</td>
+                            <td class="px-4 py-3 font-semibold">{{ '%.1f' | format(att.work_hours) }}h</td>
+                            <td class="px-4 py-3 font-semibold">
+                                Sáng: {{ att.morning_late_reason if att.morning_late_reason else '-' }}<br>
+                                Chiều: {{ att.afternoon_late_reason if att.afternoon_late_reason else '-' }}
+                            </td>
+
+                            <td class="px-4 py-3">
+                                {% if att.late %}
+                                <span class="bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs">
+                                    Muộn
+                                </span>
+                                {% else %}
+                                <span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">
+                                    Đúng giờ
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td class="px-4 py-3">
+                                {% if att.image_proof %}
+                                <a href="{{ url_for('static', filename='images/' ~ att.image_proof) }}" target="_blank"
+                                    class="text-blue-600 hover:text-blue-800 text-xs">
+                                    Xem
+                                </a>
+                                {% else %}
+                                <span class="text-gray-400 text-xs">-</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-12 text-gray-500">
+                <i class="fas fa-calendar-times text-3xl mb-4"></i>
+                <p>Chưa có dữ liệu chấm công tuần này</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Recent Actions -->
+    <div class="bg-white rounded-xl shadow-sm border">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-800 flex items-center">
+                <i class="fas fa-history text-green-500 mr-2"></i>
+                Hoạt Động Gần Đây
+            </h3>
+        </div>
+
+        <div class="p-6">
+            {% if recent_actions %}
+            <div class="space-y-3">
+                {% for action, action_type, status in recent_actions %}
+                <div class="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
+                            <span class="text-sm font-medium text-gray-600">{{ action.user.full_name[0] }}</span>
+                        </div>
+                        <div>
+                            <p class="font-medium text-gray-900">{{ action.user.full_name }}</p>
+                            <p class="text-sm text-gray-500">{{ action_type }} - {{ action.date.strftime('%d/%m/%Y') }}
+                            </p>
+                        </div>
+                    </div>
+                    <div>
+                        {% if status == 'approved' %}
+                        <span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">Đã duyệt</span>
+                        {% elif status == 'rejected' %}
+                        <span class="bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs">Đã từ chối</span>
+                        {% else %}
+                        <span class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs">Chờ xử lý</span>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-8 text-gray-500">
+                <i class="fas fa-history text-2xl mb-2"></i>
+                <p>Chưa có hoạt động gần đây</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Update date
+    document.addEventListener('DOMContentLoaded', function () {
+        const dateElement = document.getElementById('dashboard-date');
+        if (dateElement) {
+            const today = new Date();
+            dateElement.textContent = today.toLocaleDateString('vi-VN');
+        }
+    });
+
+    // Pie Chart
+    const pieCtx = document.getElementById('pieChart').getContext('2d');
+    new Chart(pieCtx, {
+        type: 'pie',
+        data: {
+            labels: {{ pie_data.labels | tojson }},
+        datasets: [{
+            data: {{ pie_data.data | tojson }},
+        backgroundColor: [
+            '#10b981', // green
+            '#ef4444', // red
+            '#f59e0b', // yellow
+            '#3b82f6'  // blue
+        ]
+            }]
+        },
+        options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'bottom'
+            }
+        }
+    }
+    });
+
+    // Line Chart
+    const lineCtx = document.getElementById('lineChart').getContext('2d');
+    new Chart(lineCtx, {
+        type: 'line',
+        data: {
+            labels: {{ line_data.labels | tojson }},
+        datasets: [{
+            label: 'Số Ca Làm',
+            data: {{ line_data.data | tojson }},
+        borderColor: '#3b82f6',
+        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+        fill: true,
+        tension: 0.3
+            }]
+        },
+        options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+            y: {
+                beginAtZero: true
+            }
+        }
+    }
+    });
+</script>
+
+{% endblock %}

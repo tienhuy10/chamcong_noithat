@@ -1,0 +1,394 @@
+{% extends 'base.html' %}
+
+{% block page_title %}Chỉnh Sửa Chấm Công{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto space-y-8">
+    <!-- Header Section -->
+    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900">Chỉnh Sửa Chấm Công</h1>
+            <p class="mt-2 text-gray-600">Cập nhật thông tin chấm công của nhân viên</p>
+        </div>
+        <div class="mt-4 lg:mt-0">
+            <a href="{{ url_for('attendance_detail', att_id=att.id) }}" 
+               class="btn bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 focus:ring-4 focus:ring-gray-200 transition-all duration-200">
+                <i class="fas fa-arrow-left mr-2"></i>Quay Lại
+            </a>
+        </div>
+    </div>
+
+    <!-- Employee Info Card -->
+    <div class="glassmorphism card-shadow rounded-xl p-6">
+        <div class="flex items-center">
+            <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center mr-4">
+                <span class="text-white font-bold text-lg">
+                    {{ att.user.full_name[0].upper() if att.user.full_name else att.user.username[0].upper() }}
+                </span>
+            </div>
+            <div>
+                <h2 class="text-xl font-bold text-gray-900">{{ att.user.full_name or att.user.username }}</h2>
+                <p class="text-gray-600">
+                    <i class="fas fa-calendar-alt mr-2"></i>
+                    {{ att.date.strftime('%A, %d/%m/%Y') }}
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Form -->
+    <div class="glassmorphism card-shadow rounded-xl p-6">
+        <div class="flex items-center mb-6">
+            <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center mr-3">
+                <i class="fas fa-edit text-white"></i>
+            </div>
+            <div>
+                <h3 class="text-lg font-bold text-gray-900">Thông Tin Chấm Công</h3>
+                <p class="text-sm text-gray-600">Cập nhật giờ vào/ra và thông tin liên quan</p>
+            </div>
+        </div>
+
+        <form method="post" class="space-y-8">
+            <!-- Morning Shift -->
+            <div class="border border-gray-200 rounded-lg p-6">
+                <div class="flex items-center mb-4">
+                    <div class="w-8 h-8 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-lg flex items-center justify-center mr-3">
+                        <i class="fas fa-sun text-white text-sm"></i>
+                    </div>
+                    <h4 class="text-lg font-semibold text-gray-900">Ca Sáng</h4>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="space-y-2">
+                        <label class="flex items-center text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-sign-in-alt mr-2 text-green-600"></i>
+                            Giờ Vào Sáng 
+                            <span class="text-red-500 ml-1">*</span>
+                        </label>
+                        <input type="datetime-local" 
+                               name="morning_check_in" 
+                               value="{{ att.morning_check_in.strftime('%Y-%m-%dT%H:%M') if att.morning_check_in else '' }}" 
+                               required 
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200">
+                        <p class="text-xs text-gray-500 mt-1">
+                            <i class="fas fa-info-circle mr-1"></i>
+                            Định dạng: YYYY-MM-DD HH:MM
+                        </p>
+                    </div>
+                    
+                    <div class="space-y-2">
+                        <label class="flex items-center text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-sign-out-alt mr-2 text-red-600"></i>
+                            Giờ Ra Sáng 
+                            <span class="text-red-500 ml-1">*</span>
+                        </label>
+                        <input type="datetime-local" 
+                               name="morning_check_out" 
+                               value="{{ att.morning_check_out.strftime('%Y-%m-%dT%H:%M') if att.morning_check_out else '' }}" 
+                               required 
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200">
+                        <p class="text-xs text-gray-500 mt-1">
+                            <i class="fas fa-info-circle mr-1"></i>
+                            Định dạng: YYYY-MM-DD HH:MM
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Afternoon Shift -->
+            <div class="border border-gray-200 rounded-lg p-6">
+                <div class="flex items-center mb-4">
+                    <div class="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center mr-3">
+                        <i class="fas fa-moon text-white text-sm"></i>
+                    </div>
+                    <h4 class="text-lg font-semibold text-gray-900">Ca Chiều</h4>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="space-y-2">
+                        <label class="flex items-center text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-sign-in-alt mr-2 text-green-600"></i>
+                            Giờ Vào Chiều
+                        </label>
+                        <input type="datetime-local" 
+                               name="afternoon_check_in" 
+                               value="{{ att.afternoon_check_in.strftime('%Y-%m-%dT%H:%M') if att.afternoon_check_in else '' }}" 
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200">
+                        <p class="text-xs text-gray-500 mt-1">
+                            <i class="fas fa-info-circle mr-1"></i>
+                            Để trống nếu không làm ca chiều
+                        </p>
+                    </div>
+                    
+                    <div class="space-y-2">
+                        <label class="flex items-center text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-sign-out-alt mr-2 text-red-600"></i>
+                            Giờ Ra Chiều
+                        </label>
+                        <input type="datetime-local" 
+                               name="afternoon_check_out" 
+                               value="{{ att.afternoon_check_out.strftime('%Y-%m-%dT%H:%M') if att.afternoon_check_out else '' }}" 
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200">
+                        <p class="text-xs text-gray-500 mt-1">
+                            <i class="fas fa-info-circle mr-1"></i>
+                            Để trống nếu không làm ca chiều
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Late Reason -->
+            <div class="border border-gray-200 rounded-lg p-6">
+                <div class="flex items-center mb-4">
+                    <div class="w-8 h-8 bg-gradient-to-br from-yellow-500 to-red-500 rounded-lg flex items-center justify-center mr-3">
+                        <i class="fas fa-clock text-white text-sm"></i>
+                    </div>
+                    <h4 class="text-lg font-semibold text-gray-900">Ghi Chú</h4>
+                </div>
+                
+                <div class="space-y-2">
+                    <label class="flex items-center text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-comment-alt mr-2 text-gray-600"></i>
+                        Lý Do Đi Muộn / Ghi Chú
+                    </label>
+                    <textarea name="late_reason" 
+                              rows="4" 
+                              placeholder="Nhập lý do đi muộn hoặc ghi chú khác..."
+                              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 resize-none">{{ att.late_reason or '' }}</textarea>
+                    <p class="text-xs text-gray-500 mt-1">
+                        <i class="fas fa-info-circle mr-1"></i>
+                        Thông tin này sẽ được ghi lại trong hệ thống
+                    </p>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0 sm:space-x-4 pt-6 border-t border-gray-200">
+                <div class="flex items-center text-sm text-gray-500">
+                    <i class="fas fa-info-circle mr-2"></i>
+                    Các trường có dấu * là bắt buộc
+                </div>
+                
+                <div class="flex space-x-3">
+                    <a href="{{ url_for('attendance_detail', att_id=att.id) }}" 
+                       class="btn bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600 focus:ring-4 focus:ring-gray-200 transition-all duration-200">
+                        <i class="fas fa-times mr-2"></i>Hủy
+                    </a>
+                    
+                    <button type="submit" 
+                            class="btn bg-gradient-to-r from-blue-600 to-indigo-700 text-white px-6 py-3 rounded-lg hover:from-blue-700 hover:to-indigo-800 focus:ring-4 focus:ring-blue-200 transition-all duration-200">
+                        <i class="fas fa-save mr-2"></i>Cập Nhật
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Help Card -->
+    <div class="glassmorphism card-shadow rounded-xl p-6 bg-blue-50 border border-blue-200">
+        <div class="flex items-start">
+            <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3 flex-shrink-0">
+                <i class="fas fa-lightbulb text-blue-600"></i>
+            </div>
+            <div>
+                <h4 class="font-semibold text-blue-900 mb-2">Hướng Dẫn</h4>
+                <ul class="text-sm text-blue-800 space-y-1">
+                    <li>• Ca sáng: Giờ vào và giờ ra là bắt buộc</li>
+                    <li>• Ca chiều: Có thể để trống nếu nhân viên không làm ca chiều</li>
+                    <li>• Lý do đi muộn: Ghi rõ nguyên nhân để theo dõi</li>
+                    <li>• Thời gian phải theo định dạng YYYY-MM-DD HH:MM</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Form validation
+    const form = document.querySelector('form');
+    const morningIn = document.querySelector('input[name="morning_check_in"]');
+    const morningOut = document.querySelector('input[name="morning_check_out"]');
+    const afternoonIn = document.querySelector('input[name="afternoon_check_in"]');
+    const afternoonOut = document.querySelector('input[name="afternoon_check_out"]');
+    
+    form.addEventListener('submit', function(e) {
+        // Validate morning shift times
+        if (morningIn.value && morningOut.value) {
+            const morningInTime = new Date(morningIn.value);
+            const morningOutTime = new Date(morningOut.value);
+            
+            if (morningInTime >= morningOutTime) {
+                e.preventDefault();
+                alert('Giờ ra sáng phải sau giờ vào sáng');
+                return false;
+            }
+        }
+        
+        // Validate afternoon shift times
+        if (afternoonIn.value && afternoonOut.value) {
+            const afternoonInTime = new Date(afternoonIn.value);
+            const afternoonOutTime = new Date(afternoonOut.value);
+            
+            if (afternoonInTime >= afternoonOutTime) {
+                e.preventDefault();
+                alert('Giờ ra chiều phải sau giờ vào chiều');
+                return false;
+            }
+        }
+        
+        // Check if afternoon check-in is provided but check-out is missing
+        if (afternoonIn.value && !afternoonOut.value) {
+            if (!confirm('Bạn đã nhập giờ vào chiều nhưng chưa nhập giờ ra. Bạn có muốn tiếp tục?')) {
+                e.preventDefault();
+                return false;
+            }
+        }
+        
+        // Show loading state
+        const submitBtn = document.querySelector('button[type="submit"]');
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Đang cập nhật...';
+        
+        // Re-enable after 5 seconds in case of error
+        setTimeout(() => {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fas fa-save mr-2"></i>Cập Nhật';
+        }, 5000);
+    });
+    
+    // Auto-fill afternoon check-out when check-in is entered
+    afternoonIn.addEventListener('change', function() {
+        if (this.value && !afternoonOut.value) {
+            const checkInTime = new Date(this.value);
+            checkInTime.setHours(checkInTime.getHours() + 4); // Add 4 hours
+            
+            const year = checkInTime.getFullYear();
+            const month = String(checkInTime.getMonth() + 1).padStart(2, '0');
+            const day = String(checkInTime.getDate()).padStart(2, '0');
+            const hours = String(checkInTime.getHours()).padStart(2, '0');
+            const minutes = String(checkInTime.getMinutes()).padStart(2, '0');
+            
+            afternoonOut.value = `${year}-${month}-${day}T${hours}:${minutes}`;
+        }
+    });
+    
+    // Auto-fill morning check-out when check-in is entered
+    morningIn.addEventListener('change', function() {
+        if (this.value && !morningOut.value) {
+            const checkInTime = new Date(this.value);
+            checkInTime.setHours(12, 0, 0, 0); // Set to 12:00 PM
+            
+            const year = checkInTime.getFullYear();
+            const month = String(checkInTime.getMonth() + 1).padStart(2, '0');
+            const day = String(checkInTime.getDate()).padStart(2, '0');
+            
+            morningOut.value = `${year}-${month}-${day}T12:00`;
+        }
+    });
+    
+    // Add visual feedback for required fields
+    [morningIn, morningOut].forEach(input => {
+        input.addEventListener('blur', function() {
+            if (!this.value && this.required) {
+                this.classList.add('border-red-500', 'focus:ring-red-500');
+            } else {
+                this.classList.remove('border-red-500', 'focus:ring-red-500');
+            }
+        });
+    });
+});
+</script>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Glassmorphism effect */
+    .glassmorphism {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .card-shadow {
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    }
+    
+    /* Enhanced hover effects */
+    .glassmorphism:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+        transition: all 0.3s ease;
+    }
+    
+    /* Button hover effects */
+    .btn:hover {
+        transform: translateY(-1px);
+    }
+    
+    /* Form field focus effects */
+    input:focus, textarea:focus {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+    }
+    
+    /* Required field indicator */
+    input:required {
+        position: relative;
+    }
+    
+    input:required:valid {
+        border-color: #10b981;
+    }
+    
+    input:required:invalid:not(:placeholder-shown) {
+        border-color: #ef4444;
+    }
+    
+    /* Loading animation */
+    .fa-spin {
+        animation: fa-spin 1s infinite linear;
+    }
+    
+    @keyframes fa-spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    /* Responsive improvements */
+    @media (max-width: 768px) {
+        .md\:grid-cols-2 {
+            grid-template-columns: 1fr;
+        }
+        
+        .sm\:flex-row {
+            flex-direction: column;
+        }
+        
+        .sm\:space-y-0 {
+            margin-top: 1rem;
+        }
+    }
+    
+    /* Custom scrollbar */
+    textarea::-webkit-scrollbar {
+        width: 6px;
+    }
+    
+    textarea::-webkit-scrollbar-track {
+        background: #f1f5f9;
+        border-radius: 3px;
+    }
+    
+    textarea::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 3px;
+    }
+    
+    textarea::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+    }
+</style>
+{% endblock %}
